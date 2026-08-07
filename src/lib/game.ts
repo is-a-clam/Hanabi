@@ -208,6 +208,16 @@ export function getScore(state: GameState): number {
   return COLORS.reduce((sum, color) => sum + state.fireworks[color], 0)
 }
 
+export function playerName(view: View, myName: string | null, id: PlayerId): string {
+  if (id === view.me) return myName ?? 'You'
+  const player = view.players.find((p) => p.id === id)
+  return player ? player.name : `Seat ${id + 1}`
+}
+
+export function describeCard(card: Card): string {
+  return `${card.color} ${card.number}`
+}
+
 export function viewForPlayer(state: GameState, me: PlayerId): View {
   const mePlayer = state.players[me]
   if (!mePlayer) throw new Error('invalid player id')
@@ -228,6 +238,10 @@ export function viewForPlayer(state: GameState, me: PlayerId): View {
         id: p.id,
         name: p.name,
         hand: p.hand.map((cardId) => ({ ...state.cards[cardId] })),
+        marks: p.hand.map((cardId) => {
+          const known = p.known[cardId]
+          return { id: cardId, color: known?.color ?? null, number: known?.number ?? null }
+        }),
       })),
     fireworks: { ...state.fireworks },
     discard: state.discard.map((card) => ({ ...card })),

@@ -2,6 +2,7 @@ import { Card, SuitGlyph } from './Card'
 import type { Color } from '../lib/types'
 
 const FIREWORK_SIZE = 'h-20 w-14 sm:h-24 sm:w-16'
+const STACK_STEP = 26
 
 export function Firework({ color, level }: { color: Color; level: number }) {
   if (level === 0) {
@@ -14,9 +15,23 @@ export function Firework({ color, level }: { color: Color; level: number }) {
       </svg>
     )
   }
+  const pad = (level - 1) * STACK_STEP
   return (
-    <div className="relative">
-      <Card mode="face" color={color} number={level} className={FIREWORK_SIZE} />
+    <div className="relative" style={{ paddingTop: pad }}>
+      <Card mode="face" color={color} number={level} className={`relative ${FIREWORK_SIZE}`} style={{ zIndex: level }} />
+      {Array.from({ length: level - 1 }, (_, i) => {
+        const value = level - 1 - i
+        return (
+          <Card
+            key={value}
+            mode="face"
+            color={color}
+            number={value}
+            className={`absolute ${FIREWORK_SIZE}`}
+            style={{ left: 0, top: (value - 1) * STACK_STEP, zIndex: value }}
+          />
+        )
+      })}
       {level === 5 && <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-green-500" />}
     </div>
   )

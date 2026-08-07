@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+html {
+  overscroll-behavior-y: none;
+}
+
+.keyboard-open,
+.keyboard-open body {
+  height: 100%;
+  overflow: hidden;
+}

@@ -70,12 +70,30 @@ export function isHostMessage(value: unknown): value is HostToClient {
   }
 }
 
+function isOwnCard(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'number' &&
+    (value.color === null || typeof value.color === 'string') &&
+    (value.number === null || typeof value.number === 'number')
+  )
+}
+
 function isView(value: unknown): boolean {
   if (!isRecord(value)) return false
   return (
     typeof value.me === 'number' &&
     Array.isArray(value.hand) &&
     Array.isArray(value.players) &&
+    value.players.every(
+      (player) =>
+        isRecord(player) &&
+        typeof player.id === 'number' &&
+        typeof player.name === 'string' &&
+        Array.isArray(player.hand) &&
+        Array.isArray(player.marks) &&
+        player.marks.every(isOwnCard),
+    ) &&
     typeof value.clueTokens === 'number' &&
     typeof value.fuseTokens === 'number' &&
     typeof value.deckRemaining === 'number' &&

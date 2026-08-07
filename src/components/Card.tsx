@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { Color } from '../lib/types'
 import { CARD_H, CARD_W, COLOR_HEX } from './cardTheme'
 import type { CardMode } from './cardTheme'
@@ -8,7 +8,10 @@ export interface CardProps {
   color: Color | null
   number: number | null
   selected?: boolean
+  onClick?: () => void
   className?: string
+  style?: CSSProperties
+  known?: { color: Color | null; number: number | null }
 }
 
 interface GlyphStyle {
@@ -85,7 +88,7 @@ function cardLabel(mode: CardMode, color: Color | null, number: number | null): 
   return 'unknown card'
 }
 
-export function Card({ mode, color, number, selected = false, className }: CardProps) {
+export function Card({ mode, color, number, selected = false, onClick, className, style, known }: CardProps) {
   let inner: ReactNode
   if (mode === 'back') {
     inner = (
@@ -126,7 +129,7 @@ export function Card({ mode, color, number, selected = false, className }: CardP
       <>
         <rect x="3" y="3" width="60" height="90" rx="7" fill="#ffffff" stroke="#d1d5db" strokeWidth="2" strokeDasharray="5 4" />
         {number != null && (
-          <g transform="translate(12 20)">
+          <g transform="translate(16 20)">
             <rect x="-9" y="-13" width="18" height="20" rx="4" fill="#1f2937" />
             <text x="0" y="-2" fontSize="15" fontWeight="700" fill="#ffffff" textAnchor="middle" dominantBaseline="middle">
               {number}
@@ -145,15 +148,45 @@ export function Card({ mode, color, number, selected = false, className }: CardP
     )
   }
 
+  const knownParts: string[] = []
+  if (mode === 'face' && known) {
+    if (known.number != null) knownParts.push('number known')
+    if (known.color) knownParts.push('color known')
+  }
+  const label =
+    knownParts.length > 0 ? `${cardLabel(mode, color, number)} (${knownParts.join(', ')})` : cardLabel(mode, color, number)
+
   return (
     <svg
       viewBox={`0 0 ${CARD_W} ${CARD_H}`}
-      className={className}
+      className={onClick ? `${className} cursor-pointer transition-opacity hover:opacity-85` : className}
       role="img"
-      aria-label={cardLabel(mode, color, number)}
+      aria-label={label}
+      style={style}
+      onClick={onClick}
     >
       {selected && <rect x="1" y="1" width="64" height="94" rx="9" fill="none" stroke="#a855f7" strokeWidth="3" />}
       {inner}
+      {mode === 'face' && known && (
+        <>
+          {known.number != null && (
+            <g transform="translate(49 21)">
+              <rect x="-9" y="-13" width="18" height="20" rx="4" fill="#1f2937" />
+              <text x="0" y="-2" fontSize="15" fontWeight="700" fill="#ffffff" textAnchor="middle" dominantBaseline="middle">
+                {known.number}
+              </text>
+            </g>
+          )}
+          {known.color && (
+            <g transform="translate(17 78)">
+              <circle r="10" fill={COLOR_HEX[known.color]} />
+              <g transform="scale(0.55)">
+                <SuitGlyph color={known.color} onDark />
+              </g>
+            </g>
+          )}
+        </>
+      )}
     </svg>
   )
 }

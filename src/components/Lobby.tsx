@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGame } from '../store/GameContext'
 
 function Lobby() {
   const { phase, isHost, roomCode, seat, seats, error, createRoom, joinRoom, startGame, clearError } = useGame()
   const [playerName, setPlayerName] = useState('')
   const [joinCode, setJoinCode] = useState('')
+
+  const lockScroll = (): void => document.documentElement.classList.add('keyboard-open')
+  const unlockScroll = (): void => document.documentElement.classList.remove('keyboard-open')
+
+  useEffect(() => () => unlockScroll(), [])
 
   const namedCount = seats?.filter((s) => s.name !== null).length ?? 0
   const canStart = namedCount >= 2
@@ -107,6 +112,8 @@ function Lobby() {
                 id="player-name"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
+                onFocus={lockScroll}
+                onBlur={unlockScroll}
                 placeholder="Player"
                 autoFocus
                 className="w-full rounded border border-neutral-200 bg-white px-3 py-2 text-gray-900 outline-none placeholder:text-gray-500/50 focus:ring-2 focus:ring-purple-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-gray-100 dark:placeholder:text-gray-400/50 dark:focus:ring-purple-400"
@@ -121,6 +128,8 @@ function Lobby() {
                 id="room-code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                onFocus={lockScroll}
+                onBlur={unlockScroll}
                 placeholder="ABC23"
                 maxLength={5}
                 className="w-full rounded border border-neutral-200 bg-white px-3 py-2 uppercase text-gray-900 outline-none placeholder:normal-case placeholder:text-gray-500/50 focus:ring-2 focus:ring-purple-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-gray-100 dark:placeholder:text-gray-400/50 dark:focus:ring-purple-400"

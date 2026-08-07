@@ -5,8 +5,10 @@ import {
   MAX_FUSE_TOKENS,
   applyAction,
   createGame,
+  describeCard,
   getScore,
   handSizeFor,
+  playerName,
   viewForPlayer,
 } from './game'
 import type { Card, Color, Fireworks, GameState } from './types'
@@ -354,8 +356,52 @@ describe('viewForPlayer', () => {
     expect(ownBlue?.color).toBeNull()
   })
 
+  it('exposes what other players know as marks', () => {
+    const theirR = c('red', 1)
+    const theirB = c('blue', 2)
+    const state = makeGame([[c('green', 1)], [theirR, theirB]], { turnOf: 0 })
+    const clued = applyAction(state, { type: 'clue', target: 1, kind: 'number', value: 2 })
+    const view = viewForPlayer(clued, 0)
+    const marks = view.players[0].marks
+    const redMark = marks.find((mark) => mark.id === theirR.id)
+    const blueMark = marks.find((mark) => mark.id === theirB.id)
+    expect(redMark?.number).toBeNull()
+    expect(redMark?.color).toBeNull()
+    expect(blueMark?.number).toBe(2)
+    expect(blueMark?.color).toBeNull()
+  })
+
   it('rejects an invalid viewer id', () => {
     const state = makeGame([[c('red', 1)], [c('green', 1)]])
     expect(() => viewForPlayer(state, 99)).toThrow()
+  })
+})
+
+describe('playerName', () => {
+  const state = makeGame([
+    [c('red', 1), c('blue', 2)],
+    [c('green', 3)],
+    [c('yellow', 4)],
+  ])
+  const view = viewForPlayer(state, 0)
+
+  it('uses the viewer name for me', () => {
+    expect(playerName(view, 'Alice', 0)).toBe('Alice')
+    expect(playerName(view, null, 0)).toBe('You')
+  })
+
+  it('looks up other players by name', () => {
+    expect(playerName(view, 'Alice', 1)).toBe('p1')
+    expect(playerName(view, 'Alice', 2)).toBe('p2')
+  })
+
+  it('falls back to a seat label for unknown ids', () => {
+    expect(playerName(view, 'Alice', 99)).toBe('Seat 100')
+  })
+})
+
+describe('describeCard', () => {
+  it('formats a card as color and number', () => {
+    expect(describeCard({ id: 1, color: 'white', number: 5 })).toBe('white 5')
   })
 })

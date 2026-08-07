@@ -7,6 +7,8 @@ export interface HandCard {
   mode: CardMode
   color: Color | null
   number: number | null
+  selected?: boolean
+  known?: { color: Color | null; number: number | null }
 }
 
 export interface HandProps {
@@ -14,10 +16,12 @@ export interface HandProps {
   cards: HandCard[]
   active?: boolean
   own?: boolean
+  offline?: boolean
+  onCardClick?: (card: HandCard) => void
   className?: string
 }
 
-export function Hand({ title, cards, active = false, own = false, className }: HandProps) {
+export function Hand({ title, cards, active = false, own = false, offline = false, onCardClick, className }: HandProps) {
   const size = own ? 'h-28 w-[4.4rem] sm:h-32 sm:w-[4.9rem]' : 'h-24 w-16 sm:h-28 sm:w-[4.4rem]'
   return (
     <div className={className}>
@@ -27,10 +31,24 @@ export function Hand({ title, cards, active = false, own = false, className }: H
         }`}
       >
         {title}
+        {offline && (
+          <span className="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
+            offline
+          </span>
+        )}
       </p>
       <div className={`flex items-end gap-1.5 ${own ? 'justify-center' : ''}`}>
         {cards.map((card) => (
-          <Card key={card.id} mode={card.mode} color={card.color} number={card.number} className={size} />
+          <Card
+            key={card.id}
+            mode={card.mode}
+            color={card.color}
+            number={card.number}
+            selected={card.selected}
+            known={card.known}
+            className={size}
+            onClick={onCardClick ? () => onCardClick(card) : undefined}
+          />
         ))}
       </div>
     </div>

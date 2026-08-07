@@ -68,6 +68,7 @@ export interface OtherPlayerView {
   id: PlayerId
   name: string
   hand: Card[]
+  marks: OwnCardView[]
 }
 
 export interface View {

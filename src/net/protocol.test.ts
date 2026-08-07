@@ -40,7 +40,14 @@ describe('isHostMessage', () => {
   const view = {
     me: 0,
     hand: [],
-    players: [],
+    players: [
+      {
+        id: 1,
+        name: 'alice',
+        hand: [{ id: 7, color: 'red', number: 3 }],
+        marks: [{ id: 7, color: null, number: 3 }],
+      },
+    ],
     fireworks: { red: 0, yellow: 0, green: 0, blue: 0, white: 0 },
     discard: [],
     clueTokens: 8,
@@ -63,6 +70,21 @@ describe('isHostMessage', () => {
     expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice', null] })).toBe(false)
     expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: [true, false] })).toBe(false)
     expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: ['yes'] })).toBe(false)
+  })
+
+  it('rejects a snapshot whose players lack marks', () => {
+    expect(
+      isHostMessage({
+        type: 'snapshot',
+        view: { ...view, players: [{ ...view.players[0], marks: undefined }] },
+      }),
+    ).toBe(false)
+    expect(
+      isHostMessage({
+        type: 'snapshot',
+        view: { ...view, players: [{ ...view.players[0], marks: [{ id: 7 }] }] },
+      }),
+    ).toBe(false)
   })
 
   it('rejects malformed messages', () => {
