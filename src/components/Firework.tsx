@@ -4,7 +4,7 @@ import type { Color } from '../lib/types'
 const FIREWORK_SIZE = 'h-20 w-14 sm:h-24 sm:w-16'
 const STACK_STEP = 26
 
-export function Firework({ color, level }: { color: Color; level: number }) {
+export function Firework({ color, level, highlight = false }: { color: Color; level: number; highlight?: boolean }) {
   if (level === 0) {
     return (
       <svg viewBox="0 0 66 96" className={FIREWORK_SIZE} role="img" aria-label={`${color} firework empty`}>
@@ -18,7 +18,7 @@ export function Firework({ color, level }: { color: Color; level: number }) {
   const pad = (level - 1) * STACK_STEP
   return (
     <div className="relative" style={{ paddingTop: pad }}>
-      <Card mode="face" color={color} number={level} className={`relative ${FIREWORK_SIZE}`} style={{ zIndex: level }} />
+      <Card mode="face" color={color} number={level} className={`relative ${FIREWORK_SIZE}${highlight ? ' animate-card-pop' : ''}`} style={{ zIndex: level }} />
       {Array.from({ length: level - 1 }, (_, i) => {
         const value = level - 1 - i
         return (

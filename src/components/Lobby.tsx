@@ -33,7 +33,7 @@ function Lobby() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-white p-6 text-gray-500 dark:bg-neutral-900 dark:text-gray-400">
+    <main className="flex min-h-svh items-center justify-center bg-white p-6 pb-14 text-gray-500 dark:bg-neutral-900 dark:text-gray-400">
       <div className="w-full max-w-md space-y-4 rounded-xl border border-neutral-200 bg-neutral-100 p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-800">
         {error && (
           <div className="flex items-start justify-between gap-3 rounded border border-red-700/30 bg-red-700/10 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-400">

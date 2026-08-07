@@ -11,3 +11,43 @@ body {
     background-color: #171717;
   }
 }
+
+@keyframes card-pop {
+  0% {
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.9));
+  }
+  60% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(168, 85, 247, 0));
+  }
+}
+
+.animate-card-pop {
+  animation: card-pop 0.5s ease-out;
+}
+
+@keyframes fuse-flash {
+  0% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.9));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(220, 38, 38, 0));
+  }
+}
+
+.animate-fuse-flash {
+  animation: fuse-flash 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-pop,
+  .animate-fuse-flash {
+    animation: none;
+  }
+}

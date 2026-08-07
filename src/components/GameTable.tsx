@@ -28,6 +28,12 @@ export function GameTable() {
   const turnText = myTurn ? "It's your turn" : `${playerName(view, name, view.turnOf)}'s turn`
   const clueChips = Array.from({ length: 8 }, (_, i) => i < view.clueTokens)
   const fuseChips = Array.from({ length: 3 }, (_, i) => i < view.fuseTokens)
+  const lastEvent = view.log[view.log.length - 1]
+  const lastDiscardedId =
+    lastEvent && (lastEvent.type === 'discard' || (lastEvent.type === 'play' && !lastEvent.success))
+      ? lastEvent.card.id
+      : undefined
+  const justFused = lastEvent?.type === 'play' && lastEvent.fused
   const sortedDiscard = [...view.discard].sort((a, b) => {
     const colorDiff = COLORS.indexOf(a.color) - COLORS.indexOf(b.color)
     return colorDiff !== 0 ? colorDiff : a.number - b.number
@@ -69,7 +75,7 @@ export function GameTable() {
 
   return (
     <main className='min-h-svh bg-white text-gray-500 dark:bg-neutral-900 dark:text-gray-400'>
-      <div className='mx-auto flex min-h-svh max-w-3xl flex-col gap-5 px-4 py-5'>
+      <div className='mx-auto flex min-h-svh max-w-3xl flex-col gap-5 px-4 pt-5 pb-14'>
         <header className='flex flex-wrap items-center gap-x-5 gap-y-2'>
           <span className='text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
             Room {roomCode}
@@ -83,7 +89,7 @@ export function GameTable() {
             ))}
             <span className='ml-1 text-xs'>clues</span>
           </span>
-          <span className='flex items-center gap-1'>
+          <span className={`flex items-center gap-1${justFused ? ' animate-fuse-flash' : ''}`}>
             {fuseChips.map((filled, i) => (
               <span
                 key={`fuse-${i}`}
@@ -136,7 +142,12 @@ export function GameTable() {
         <section className='space-y-4 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/50'>
           <div className='flex flex-wrap items-end justify-center gap-2'>
             {COLORS.map((color) => (
-              <Firework key={color} color={color} level={view.fireworks[color]} />
+              <Firework
+                key={color}
+                color={color}
+                level={view.fireworks[color]}
+                highlight={lastEvent?.type === 'play' && lastEvent.success && lastEvent.card.color === color}
+              />
             ))}
           </div>
           <div>
@@ -151,7 +162,7 @@ export function GameTable() {
                     mode='face'
                     color={card.color}
                     number={card.number}
-                    className='h-11 w-8 sm:h-14 sm:w-10'
+                    className={`h-11 w-8 sm:h-14 sm:w-10${card.id === lastDiscardedId ? ' animate-card-pop' : ''}`}
                   />
                 ))}
               </div>

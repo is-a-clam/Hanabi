@@ -174,6 +174,7 @@ export class HostPeer {
       this.peer.reconnect()
       return
     }
+    if (err.type === PeerErrorType.Network) return
     this.callbacks.onError(err.message)
   }
 
@@ -319,6 +320,7 @@ export class ClientPeer {
       this.peer.reconnect()
       return
     }
+    if (err.type === PeerErrorType.Network && this.lastHostMessage !== null) return
     this.callbacks.onError(err.message)
   }
 
