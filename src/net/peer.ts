@@ -132,6 +132,9 @@ export class HostPeer {
     })
     this.peer.on('connection', (conn) => this.handleConnection(conn))
     this.peer.on('error', (err) => this.handleError(err))
+    this.peer.on('disconnected', () => {
+      this.peer.reconnect()
+    })
   }
 
   private handleConnection(conn: DataConnection): void {

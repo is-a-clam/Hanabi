@@ -37,33 +37,20 @@ export interface GameContextValue {
 const GameContext = createContext<GameContextValue | null>(null)
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [phase, setPhaseState] = useState<Phase>('idle')
-  const phaseRef = useRef<Phase>('idle')
-  function setPhase(next: Phase): void {
-    phaseRef.current = next
-    setPhaseState(next)
-  }
-  const [reconnecting, setReconnectingState] = useState(false)
-  const reconnectingRef = useRef(false)
-  function setReconnecting(next: boolean): void {
-    reconnectingRef.current = next
-    setReconnectingState(next)
-  }
+  // Common State
   const [isHost, setIsHost] = useState(false)
   const [roomCode, setRoomCode] = useState<string | null>(null)
   const [name, setName] = useState<string | null>(null)
   const [peerId, setPeerId] = useState<string | null>(null)
+  const [phase, setPhaseState] = useState<Phase>('idle')
   const [seat, setSeat] = useState<number | null>(null)
   const [seats, setSeats] = useState<HostSeatInfo[] | null>(null)
   const [view, setView] = useState<View | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const hostRef = useRef<HostPeer | null>(null)
-  const clientRef = useRef<ClientPeer | null>(null)
-  const gameRef = useRef<GameState | null>(null)
   const roomCodeRef = useRef<string | null>(null)
   const nameRef = useRef<string | null>(null)
-  const retryModeRef = useRef<'lobby' | 'game'>('game')
+  const phaseRef = useRef<Phase>('idle')
   const recoveredRef = useRef(false)
 
   useEffect(() => {
@@ -72,6 +59,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     nameRef.current = name
   }, [name])
+  useEffect(() => {
+    phaseRef.current = phase
+  }, [phase])
+
+  // Host State
+  const hostRef = useRef<HostPeer | null>(null)
+  const gameRef = useRef<GameState | null>(null)
+
+  // Client State
+  const [reconnecting, setReconnectingState] = useState(false)
+
+  const clientRef = useRef<ClientPeer | null>(null)
+  const reconnectingRef = useRef(false)
+  const retryModeRef = useRef<'lobby' | 'game'>('game')
+
+  useEffect(() => {
+    reconnectingRef.current = reconnecting
+  }, [reconnecting])
 
   const cleanup = useCallback(() => {
     hostRef.current?.close()
@@ -80,7 +85,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     clientRef.current = null
     gameRef.current = null
     recoveredRef.current = false
-    setReconnecting(false)
+    setReconnectingState(false)
   }, [])
 
   useEffect(() => cleanup, [cleanup])
@@ -101,7 +106,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!host) return
     setView(viewForPlayer(state, 0))
     host.broadcast((seatNo) => ({ type: 'snapshot', view: viewForPlayer(state, seatNo) }))
-    if (state.over) setPhase('over')
+    if (state.over) setPhaseState('over')
   }, [])
 
   const applyAndBroadcast = useCallback(
@@ -134,9 +139,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             setSeat(0)
             if (gameRef.current) {
               host.lockJoins()
-              setPhase(gameRef.current.over ? 'over' : 'playing')
+              setPhaseState(gameRef.current.over ? 'over' : 'playing')
             } else {
-              setPhase('lobby')
+              setPhaseState('lobby')
             }
             persistHost()
           },
@@ -151,7 +156,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           },
           onError: (message) => {
             setError(message)
-            if (phaseRef.current === 'connecting') setPhase('idle')
+            if (phaseRef.current === 'connecting') setPhaseState('idle')
           },
         },
         opts,
@@ -169,30 +174,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setSeat(mySeat)
         setSeats(names.map((playerName, i) => ({ seat: i, name: playerName, connected: connected[i] ?? false })))
         saveClientSession({ roomCode: room, name: clientName })
-        if (phaseRef.current === 'connecting') setPhase('lobby')
-        if (reconnectingRef.current && retryModeRef.current === 'lobby') setReconnecting(false)
+        if (phaseRef.current === 'connecting') setPhaseState('lobby')
+        if (reconnectingRef.current && retryModeRef.current === 'lobby') setReconnectingState(false)
       },
       onSnapshot: (snap) => {
         setView(snap)
-        setPhase(snap.over ? 'over' : 'playing')
-        if (reconnectingRef.current) setReconnecting(false)
+        setPhaseState(snap.over ? 'over' : 'playing')
+        if (reconnectingRef.current) setReconnectingState(false)
       },
       onError: (message) => {
         if (reconnectingRef.current) return
         setError(message)
-        if (phaseRef.current === 'connecting') setPhase('idle')
+        if (phaseRef.current === 'connecting') setPhaseState('idle')
       },
       onDisconnect: () => {
         const current = phaseRef.current
         if (current === 'playing' || current === 'over') {
           retryModeRef.current = 'game'
-          setReconnecting(true)
+          setReconnectingState(true)
         } else if (current === 'lobby') {
           retryModeRef.current = 'lobby'
-          setReconnecting(true)
+          setReconnectingState(true)
         } else {
           setError('Disconnected.')
-          setPhase('idle')
+          setPhaseState('idle')
           clearClientSession()
         }
       },
@@ -207,7 +212,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setName(playerName)
       setIsHost(true)
       setSeat(0)
-      setPhase('connecting')
+      setPhaseState('connecting')
       setView(null)
       setError(null)
       const host = makeHost(playerName)
@@ -224,7 +229,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setName(saved.name)
       setIsHost(true)
       setSeat(0)
-      setPhase('connecting')
+      setPhaseState('connecting')
       setView(null)
       setError(null)
       if (saved.game) {
@@ -245,7 +250,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearHostSession()
       setName(playerName)
       setIsHost(false)
-      setPhase('connecting')
+      setPhaseState('connecting')
       setView(null)
       setError(null)
       const client = makeClient(playerName, trimmed)
@@ -276,7 +281,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     gameRef.current = state
     host.lockJoins()
     broadcast(state)
-    setPhase(state.over ? 'over' : 'playing')
+    setPhaseState(state.over ? 'over' : 'playing')
     persistHost()
   }, [broadcast, persistHost])
 
@@ -331,7 +336,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       cancelled = true
       if (timer !== null) clearTimeout(timer)
     }
-  }, [reconnecting, makeClient])
+  }, [reconnecting, makeClient, reconnectRoom])
 
   return (
     <GameContext.Provider
