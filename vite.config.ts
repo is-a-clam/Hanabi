@@ -16,7 +16,7 @@ export default defineConfig({
         short_name: 'Hanabi',
         description: 'Play Hanabi',
         theme_color: '#c084fc',
-        background_color: '#16171d',
+        background_color: '#171717',
         display: 'standalone',
         start_url: '/',
         scope: '/',
