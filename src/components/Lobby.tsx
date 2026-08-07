@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { requestNotifyPermission } from '../lib/notify'
 import { useGame } from '../store/GameContext'
 
 function Lobby() {
@@ -16,13 +17,19 @@ function Lobby() {
 
   function handleCreate(): void {
     const trimmed = playerName.trim()
-    if (trimmed) createRoom(trimmed)
+    if (trimmed) {
+      requestNotifyPermission()
+      createRoom(trimmed)
+    }
   }
 
   function handleJoin(): void {
     const trimmed = playerName.trim()
     const code = joinCode.trim()
-    if (trimmed && code) joinRoom(code, trimmed)
+    if (trimmed && code) {
+      requestNotifyPermission()
+      joinRoom(code, trimmed)
+    }
   }
 
   return (

@@ -68,44 +68,50 @@ export function GameTable() {
   }
 
   return (
-    <main className="min-h-svh bg-white text-gray-500 dark:bg-neutral-900 dark:text-gray-400">
-      <div className="mx-auto flex min-h-svh max-w-3xl flex-col gap-5 px-4 py-5">
-        <header className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70">
+    <main className='min-h-svh bg-white text-gray-500 dark:bg-neutral-900 dark:text-gray-400'>
+      <div className='mx-auto flex min-h-svh max-w-3xl flex-col gap-5 px-4 py-5'>
+        <header className='flex flex-wrap items-center gap-x-5 gap-y-2'>
+          <span className='text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
             Room {roomCode}
           </span>
-          <span className="flex items-center gap-1">
+          <span className='flex items-center gap-1'>
             {clueChips.map((filled, i) => (
               <span
                 key={`clue-${i}`}
                 className={`h-3.5 w-3.5 rounded-sm ${filled ? 'bg-purple-500 dark:bg-purple-400' : 'bg-neutral-200 dark:bg-neutral-700'}`}
               />
             ))}
-            <span className="ml-1 text-xs">clues</span>
+            <span className='ml-1 text-xs'>clues</span>
           </span>
-          <span className="flex items-center gap-1">
+          <span className='flex items-center gap-1'>
             {fuseChips.map((filled, i) => (
               <span
                 key={`fuse-${i}`}
                 className={`h-3.5 w-3.5 rounded-sm ${filled ? 'bg-red-600 dark:bg-red-500' : 'bg-neutral-200 dark:bg-neutral-700'}`}
               />
             ))}
-            <span className="ml-1 text-xs">fuses</span>
+            <span className='ml-1 text-xs'>fuses</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <Card mode="back" color={null} number={null} className="h-10 w-7" />
-            <span className="text-sm font-semibold">{view.deckRemaining}</span>
+          <span className='flex items-center gap-1.5'>
+            <Card mode='back' color={null} number={null} className='h-10 w-7' />
+            <span className='text-sm font-semibold'>{view.deckRemaining}</span>
           </span>
         </header>
 
+        {reconnecting && (
+          <p className='rounded bg-amber-100 px-3 py-1.5 text-center text-sm font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-400'>
+            Disconnected — reconnecting…
+          </p>
+        )}
+
         {error && (
-          <div className="flex items-start justify-between gap-3 rounded border border-red-700/30 bg-red-700/10 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-400">
+          <div className='flex items-start justify-between gap-3 rounded border border-red-700/30 bg-red-700/10 px-3 py-2 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-400'>
             <span>{error}</span>
             <button
-              type="button"
+              type='button'
               onClick={clearError}
-              aria-label="dismiss error"
-              className="font-bold hover:text-red-900 dark:hover:text-red-200"
+              aria-label='dismiss error'
+              className='font-bold hover:text-red-900 dark:hover:text-red-200'
             >
               ×
             </button>
@@ -121,47 +127,41 @@ export function GameTable() {
           {turnOffline && ' (offline)'}
         </p>
 
-        {reconnecting && (
-          <p className="rounded bg-amber-100 px-3 py-1.5 text-center text-sm font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-400">
-            Disconnected — reconnecting…
-          </p>
-        )}
-
         {view.finalRound && (
-          <p className="rounded bg-amber-100 px-3 py-1.5 text-center text-sm font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-400">
+          <p className='rounded bg-amber-100 px-3 py-1.5 text-center text-sm font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-400'>
             Final round — {view.finalTurnsRemaining} {view.finalTurnsRemaining === 1 ? 'turn' : 'turns'} left
           </p>
         )}
 
-        <section className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/50">
-          <div className="flex flex-wrap items-end justify-center gap-2">
+        <section className='space-y-4 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-800/50'>
+          <div className='flex flex-wrap items-end justify-center gap-2'>
             {COLORS.map((color) => (
               <Firework key={color} color={color} level={view.fireworks[color]} />
             ))}
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70">
+            <p className='mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
               Discard · {view.discard.length}
             </p>
             {sortedDiscard.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
+              <div className='flex flex-wrap gap-1'>
                 {sortedDiscard.map((card) => (
                   <Card
                     key={card.id}
-                    mode="face"
+                    mode='face'
                     color={card.color}
                     number={card.number}
-                    className="h-11 w-8 sm:h-14 sm:w-10"
+                    className='h-11 w-8 sm:h-14 sm:w-10'
                   />
                 ))}
               </div>
             ) : (
-              <div className="h-11 w-8 rounded-md border border-dashed border-neutral-300 dark:border-neutral-600 sm:h-14 sm:w-10" />
+              <div className='h-11 w-8 rounded-md border border-dashed border-neutral-300 dark:border-neutral-600 sm:h-14 sm:w-10' />
             )}
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className='space-y-4'>
           {view.players.map((player) => (
             <Hand
               key={player.id}
@@ -197,15 +197,13 @@ export function GameTable() {
           offline={seats?.[view.me]?.connected === false}
           cards={ownCards}
           onCardClick={toggleCard}
-          className="mt-auto"
+          className='mt-auto'
         />
 
         <Log view={view} myName={name} />
       </div>
 
-      {clueOpen && (
-        <ClueModal players={view.players} onClose={() => setClueOpen(false)} onSubmit={handleClue} />
-      )}
+      {clueOpen && <ClueModal players={view.players} onClose={() => setClueOpen(false)} onSubmit={handleClue} />}
       {view.over && <GameOverModal view={view} isHost={isHost} onPlayAgain={handlePlayAgain} />}
     </main>
   )

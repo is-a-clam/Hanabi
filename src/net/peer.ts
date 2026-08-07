@@ -170,6 +170,10 @@ export class HostPeer {
       this.callbacks.onError(`room code "${this._roomCode}" is already taken, create a new room`)
       return
     }
+    if (err.type === PeerErrorType.Disconnected) {
+      this.peer.reconnect()
+      return
+    }
     this.callbacks.onError(err.message)
   }
 
@@ -289,12 +293,7 @@ export class ClientPeer {
       this.conn = conn
       this.handleConnection(conn)
     })
-    this.peer.on('error', (err) => {
-      const room = this.roomCode
-      callbacks.onError(
-        err.type === PeerErrorType.PeerUnavailable ? `room "${room ?? 'unknown'}" not found` : err.message,
-      )
-    })
+    this.peer.on('error', (err) => this.handleError(err))
   }
 
   get id(): string {
@@ -309,6 +308,18 @@ export class ClientPeer {
     this.stopPing()
     this.stopHostWatchdog()
     this.peer.destroy()
+  }
+
+  private handleError(err: PeerError<`${PeerErrorType}`>): void {
+    if (err.type === PeerErrorType.PeerUnavailable) {
+      this.callbacks.onError(`room "${this.roomCode ?? 'unknown'}" not found`)
+      return
+    }
+    if (err.type == PeerErrorType.Disconnected) {
+      this.peer.reconnect()
+      return
+    }
+    this.callbacks.onError(err.message)
   }
 
   private handleConnection(conn: DataConnection): void {
