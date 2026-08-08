@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { IoReload } from 'react-icons/io5'
 import { ActionBar } from './ActionBar'
 import { Card } from './Card'
 import { ClueModal } from './ClueModal'
@@ -14,7 +15,8 @@ import type { Action, CardId } from '../lib/types'
 import { useGame } from '../store/GameContext'
 
 export function GameTable() {
-  const { view, roomCode, name, seats, error, reconnecting, clearError, sendAction, isHost, startGame } = useGame()
+  const { view, roomCode, name, seats, error, reconnecting, clearError, sendAction, reconnectNow, isHost, startGame } =
+    useGame()
   const [selectedId, setSelectedId] = useState<CardId | null>(null)
   const [clueOpen, setClueOpen] = useState(false)
 
@@ -76,11 +78,22 @@ export function GameTable() {
 
   return (
     <main className='flex h-dvh flex-col bg-white text-gray-500 dark:bg-neutral-900 dark:text-gray-400'>
-      <header className='shrink-0 border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900'>
+      <header className='sticky top-0 z-10 shrink-0 border-b border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900'>
         <div className='mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-5 gap-y-2 px-4 pt-3 pb-2'>
           <span className='text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
             Room {roomCode}
           </span>
+          {!isHost && (
+            <button
+              type='button'
+              onClick={reconnectNow}
+              title='Reconnect'
+              aria-label='Reconnect'
+              className='rounded p-1 text-gray-500/70 transition hover:bg-neutral-100 hover:text-gray-900 dark:text-gray-400/70 dark:hover:bg-neutral-700 dark:hover:text-gray-100'
+            >
+              <IoReload className={`text-lg${reconnecting ? ' animate-spin' : ''}`} />
+            </button>
+          )}
           <span className='flex items-center gap-1'>
             {clueChips.map((filled, i) => (
               <span

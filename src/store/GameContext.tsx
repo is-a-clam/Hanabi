@@ -31,6 +31,7 @@ export interface GameContextValue {
   joinRoom: (code: string, name: string) => void
   startGame: () => void
   sendAction: (action: Action) => void
+  reconnectNow: () => void
   clearError: () => void
 }
 
@@ -298,6 +299,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const reconnectNow = useCallback(() => {
+    const code = roomCodeRef.current
+    const playerName = nameRef.current
+    if (isHost || !code || !playerName) return
+    reconnectRoom(code, playerName)
+  }, [isHost, reconnectRoom])
+
   useEffect(() => {
     if (recoveredRef.current) return
     recoveredRef.current = true
@@ -355,6 +363,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         joinRoom,
         startGame,
         sendAction,
+        reconnectNow,
         clearError,
       }}
     >

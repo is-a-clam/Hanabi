@@ -8,12 +8,12 @@ export interface ActionBarProps {
 }
 
 const buttonBase =
-  'rounded px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40'
+  'flex-1 rounded px-4 py-3 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none sm:px-6 sm:py-2.5 sm:text-sm'
 
 export function ActionBar({ canClue, canDiscard, hasSelection, onPlay, onDiscard, onClue }: ActionBarProps) {
   return (
     <div className="space-y-1.5">
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-2 sm:justify-center">
         <button
           type="button"
           onClick={onPlay}
