@@ -2,6 +2,7 @@ import { GameTable } from './components/GameTable'
 import Lobby from './components/Lobby'
 import { TurnNotifier } from './components/TurnNotifier'
 import { GameProvider, useGame } from './store/GameContext'
+import { version } from '../package.json'
 
 function Shell() {
   const { phase } = useGame()
@@ -21,6 +22,12 @@ function App() {
         aria-hidden='true'
       >
         Created by Isaac Lam
+      </footer>
+      <footer
+        className='pointer-events-none fixed bottom-4 left-4 z-10 text-sm text-gray-500/70 dark:text-gray-400/70 opacity-95'
+        aria-hidden='true'
+      >
+        Version {version}
       </footer>
     </GameProvider>
   )

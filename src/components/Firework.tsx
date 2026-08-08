@@ -1,4 +1,6 @@
+import type { CSSProperties } from 'react'
 import { Card, SuitGlyph } from './Card'
+import { COLOR_HEX } from './cardTheme'
 import type { Color } from '../lib/types'
 
 const FIREWORK_SIZE = 'h-20 w-14 sm:h-24 sm:w-16'
@@ -18,7 +20,17 @@ export function Firework({ color, level, highlight = false }: { color: Color; le
   const pad = (level - 1) * STACK_STEP
   return (
     <div className="relative" style={{ paddingTop: pad }}>
-      <Card mode="face" color={color} number={level} className={`relative ${FIREWORK_SIZE}${highlight ? ' animate-card-pop' : ''}`} style={{ zIndex: level }} />
+      <Card
+        mode="face"
+        color={color}
+        number={level}
+        className={`relative ${FIREWORK_SIZE}${highlight ? ' animate-card-pop' : ''}`}
+        style={
+          highlight
+            ? ({ zIndex: level, '--card-pop-color': `${COLOR_HEX[color]}e6` } as CSSProperties)
+            : { zIndex: level }
+        }
+      />
       {Array.from({ length: level - 1 }, (_, i) => {
         const value = level - 1 - i
         return (
