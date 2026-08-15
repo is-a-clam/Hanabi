@@ -6,7 +6,14 @@ export type ClientToHost =
   | { type: 'ping' }
 
 export type HostToClient =
-  | { type: 'room-info'; room: string; seat: number; names: (string | null)[]; connected: boolean[] }
+  | {
+      type: 'room-info'
+      room: string
+      seat: number
+      names: (string | null)[]
+      connected: boolean[]
+      turnOrder: number[] | null
+    }
   | { type: 'snapshot'; view: View }
   | { type: 'error'; message: string }
   | { type: 'pong' }
@@ -57,7 +64,9 @@ export function isHostMessage(value: unknown): value is HostToClient {
         value.names.every((name) => name === null || typeof name === 'string') &&
         Array.isArray(value.connected) &&
         value.connected.every((connected) => typeof connected === 'boolean') &&
-        value.connected.length === value.names.length
+        value.connected.length === value.names.length &&
+        (value.turnOrder === null ||
+          (Array.isArray(value.turnOrder) && value.turnOrder.every((id) => typeof id === 'number')))
       )
     case 'snapshot':
       return isView(value.view)

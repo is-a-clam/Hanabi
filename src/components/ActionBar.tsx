@@ -2,6 +2,7 @@ export interface ActionBarProps {
   canClue: boolean
   canDiscard: boolean
   hasSelection: boolean
+  showClue?: boolean
   onPlay: () => void
   onDiscard: () => void
   onClue: () => void
@@ -10,7 +11,7 @@ export interface ActionBarProps {
 const buttonBase =
   'flex-1 rounded px-4 py-3 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none sm:px-6 sm:py-2.5 sm:text-sm'
 
-export function ActionBar({ canClue, canDiscard, hasSelection, onPlay, onDiscard, onClue }: ActionBarProps) {
+export function ActionBar({ canClue, canDiscard, hasSelection, showClue = true, onPlay, onDiscard, onClue }: ActionBarProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-center gap-2 sm:justify-center">
@@ -30,14 +31,16 @@ export function ActionBar({ canClue, canDiscard, hasSelection, onPlay, onDiscard
         >
           Discard
         </button>
-        <button
-          type="button"
-          onClick={onClue}
-          disabled={!canClue}
-          className={`${buttonBase} bg-teal-600 text-white hover:bg-teal-500 dark:bg-teal-500 dark:text-neutral-950 dark:hover:bg-teal-400`}
-        >
-          Clue
-        </button>
+        {showClue && (
+          <button
+            type="button"
+            onClick={onClue}
+            disabled={!canClue}
+            className={`${buttonBase} bg-teal-600 text-white hover:bg-teal-500 dark:bg-teal-500 dark:text-neutral-950 dark:hover:bg-teal-400`}
+          >
+            Clue
+          </button>
+        )}
       </div>
       <p className="text-center text-xs text-gray-500/70 dark:text-gray-400/70">
         {hasSelection ? 'Press Play or Discard on the selected card' : 'Select a card to play or discard'}

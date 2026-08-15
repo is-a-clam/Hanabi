@@ -46,7 +46,7 @@ export interface HostCallbacks {
 
 export interface ClientCallbacks {
   onOpen(id: string): void
-  onRoomInfo(room: string, seat: number, names: (string | null)[], connected: boolean[]): void
+  onRoomInfo(room: string, seat: number, names: (string | null)[], connected: boolean[], turnOrder: number[] | null): void
   onSnapshot(view: View): void
   onDisconnect(): void
   onError(message: string): void
@@ -64,6 +64,7 @@ export class HostPeer {
   private attempts = 0
   private locked = false
   private recoveryDelayIndex = 0
+  private _turnOrder: number[] | null = null
 
   private readonly callbacks: HostCallbacks
   private readonly seatList: HostSeatInfo[]
@@ -97,6 +98,14 @@ export class HostPeer {
 
   get joinsLocked(): boolean {
     return this.locked
+  }
+
+  get turnOrder(): number[] | null {
+    return this._turnOrder
+  }
+
+  setTurnOrder(order: number[] | null): void {
+    this._turnOrder = order
   }
 
   sendTo(seat: number, message: HostToClient): void {
@@ -265,10 +274,17 @@ export class HostPeer {
     if (conn.open) conn.send(message)
   }
 
-  private broadcastRoomInfo(): void {
+  broadcastRoomInfo(): void {
     const names = this.seatList.map((seat) => seat.name)
     const connected = this.seatList.map((seat) => seat.connected)
-    this.broadcast((seat) => ({ type: 'room-info', room: this.roomCode, seat, names, connected }))
+    this.broadcast((seat) => ({
+      type: 'room-info',
+      room: this.roomCode,
+      seat,
+      names,
+      connected,
+      turnOrder: this._turnOrder,
+    }))
   }
 }
 
@@ -344,7 +360,7 @@ export class ClientPeer {
     this.lastHostMessage = Date.now()
     switch (data.type) {
       case 'room-info':
-        this.callbacks.onRoomInfo(data.room, data.seat, data.names, data.connected)
+        this.callbacks.onRoomInfo(data.room, data.seat, data.names, data.connected, data.turnOrder)
         break
       case 'snapshot':
         this.callbacks.onSnapshot(data.view)

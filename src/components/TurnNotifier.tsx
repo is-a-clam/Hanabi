@@ -3,11 +3,11 @@ import { shouldNotifyTurn, showTurnNotification, turnNotificationSupported } fro
 import { useGame } from '../store/GameContext'
 
 export function TurnNotifier() {
-  const { view } = useGame()
+  const { view, simulating } = useGame()
   const prevTurnOfRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!view) return
+    if (!view || simulating) return
     const turnOf = view.turnOf
     const prev = prevTurnOfRef.current
     prevTurnOfRef.current = turnOf
@@ -15,7 +15,7 @@ export function TurnNotifier() {
     if (shouldNotifyTurn(prev, turnOf, view.me, view.over !== null)) {
       showTurnNotification()
     }
-  }, [view])
+  }, [view, simulating])
 
   return null
 }

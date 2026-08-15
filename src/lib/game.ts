@@ -21,6 +21,7 @@ export function handSizeFor(numPlayers: number): number {
 export interface CreateGameOptions {
   rng?: () => number
   deck?: Card[]
+  turnOrder?: PlayerId[]
 }
 
 export function createGame(names: string[], opts: CreateGameOptions = {}): GameState {
@@ -40,6 +41,7 @@ export function createGame(names: string[], opts: CreateGameOptions = {}): GameS
     hand: [],
     known: {},
   }))
+  const turnOrder = opts.turnOrder ?? shuffle(players.map((p) => p.id), opts.rng ?? Math.random)
 
   const drawPile = [...deck]
   for (let round = 0; round < handSize; round++) {
@@ -58,7 +60,8 @@ export function createGame(names: string[], opts: CreateGameOptions = {}): GameS
     fireworks: { red: 0, yellow: 0, green: 0, blue: 0, white: 0 },
     clueTokens: MAX_CLUE_TOKENS,
     fuseTokens: MAX_FUSE_TOKENS,
-    turnOf: 0,
+    turnOf: turnOrder[0],
+    turnOrder,
     finalRound: false,
     finalTurnsRemaining: 0,
     over: null,
@@ -180,7 +183,8 @@ function drawCard(s: GameState): void {
 }
 
 function finishTurn(s: GameState): void {
-  s.turnOf = (s.turnOf + 1) % s.players.length
+  const idx = s.turnOrder.indexOf(s.turnOf)
+  s.turnOf = s.turnOrder[(idx + 1) % s.turnOrder.length]
 
   if (allFireworksComplete(s)) {
     s.over = { reason: 'perfect', score: 25 }
@@ -212,6 +216,12 @@ export function playerName(view: View, myName: string | null, id: PlayerId): str
   if (id === view.me) return myName ?? 'You'
   const player = view.players.find((p) => p.id === id)
   return player ? player.name : `Seat ${id + 1}`
+}
+
+export function turnNumberFor(turnOrder: PlayerId[] | null, id: PlayerId): number | null {
+  if (turnOrder === null) return null
+  const idx = turnOrder.indexOf(id)
+  return idx === -1 ? null : idx + 1
 }
 
 export function describeCard(card: Card): string {

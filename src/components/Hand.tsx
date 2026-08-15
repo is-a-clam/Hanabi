@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Card } from './Card'
 import type { CardMode } from './cardTheme'
 import type { Color } from '../lib/types'
@@ -16,13 +17,30 @@ export interface HandProps {
   cards: HandCard[]
   active?: boolean
   own?: boolean
+  compact?: boolean
   offline?: boolean
   onCardClick?: (card: HandCard) => void
+  actionButton?: ReactNode
   className?: string
 }
 
-export function Hand({ title, cards, active = false, own = false, offline = false, onCardClick, className }: HandProps) {
-  const size = own ? 'h-28 w-[4.4rem] sm:h-32 sm:w-[4.9rem]' : 'h-24 w-16 sm:h-28 sm:w-[4.4rem]'
+export function Hand({
+  title,
+  cards,
+  active = false,
+  own = false,
+  compact = false,
+  offline = false,
+  onCardClick,
+  actionButton,
+  className,
+}: HandProps) {
+  const size = own
+    ? 'h-28 w-[4.4rem] sm:h-32 sm:w-[4.9rem]'
+    : compact
+      ? 'h-24 w-[3rem] sm:h-28 sm:w-[4.4rem]'
+      : 'h-24 w-16 sm:h-28 sm:w-[4.4rem]'
+  const rowClass = own ? 'justify-center' : actionButton ? 'flex-wrap justify-between sm:justify-start' : ''
   return (
     <div className={className}>
       <p
@@ -37,19 +55,22 @@ export function Hand({ title, cards, active = false, own = false, offline = fals
           </span>
         )}
       </p>
-      <div className={`flex items-end gap-1.5 ${own ? 'justify-center' : ''}`}>
-        {cards.map((card) => (
-          <Card
-            key={card.id}
-            mode={card.mode}
-            color={card.color}
-            number={card.number}
-            selected={card.selected}
-            known={card.known}
-            className={size}
-            onClick={onCardClick ? () => onCardClick(card) : undefined}
-          />
-        ))}
+      <div className={`flex items-center gap-1.5 ${rowClass}`}>
+        <div className='flex items-end gap-1.5'>
+          {cards.map((card) => (
+            <Card
+              key={card.id}
+              mode={card.mode}
+              color={card.color}
+              number={card.number}
+              selected={card.selected}
+              known={card.known}
+              className={size}
+              onClick={onCardClick ? () => onCardClick(card) : undefined}
+            />
+          ))}
+        </div>
+        {actionButton && <div className='ml-1.5 shrink-0 sm:ml-2.5'>{actionButton}</div>}
       </div>
     </div>
   )

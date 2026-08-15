@@ -24,15 +24,21 @@ export interface GameContextValue {
   seat: number | null
   roomCode: string | null
   seats: HostSeatInfo[] | null
+  turnOrder: number[] | null
   view: View | null
   error: string | null
   reconnecting: boolean
+  simulating: boolean
+  simSeat: number | null
   createRoom: (name: string) => void
   joinRoom: (code: string, name: string) => void
   startGame: () => void
   sendAction: (action: Action) => void
   reconnectNow: () => void
   clearError: () => void
+  simulateRoom: (count: number) => void
+  switchSimSeat: () => void
+  exitSimulate: () => void
 }
 
 const GameContext = createContext<GameContextValue | null>(null)
@@ -46,8 +52,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [phase, setPhaseState] = useState<Phase>('idle')
   const [seat, setSeat] = useState<number | null>(null)
   const [seats, setSeats] = useState<HostSeatInfo[] | null>(null)
+  const [turnOrder, setTurnOrderState] = useState<number[] | null>(null)
   const [view, setView] = useState<View | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [simulating, setSimulating] = useState(false)
+  const [simSeat, setSimSeat] = useState<number | null>(null)
 
   const roomCodeRef = useRef<string | null>(null)
   const nameRef = useRef<string | null>(null)
@@ -67,6 +76,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Host State
   const hostRef = useRef<HostPeer | null>(null)
   const gameRef = useRef<GameState | null>(null)
+  const simulatingRef = useRef(false)
+  const simSeatRef = useRef<number | null>(null)
 
   // Client State
   const [reconnecting, setReconnectingState] = useState(false)
@@ -87,6 +98,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     gameRef.current = null
     recoveredRef.current = false
     setReconnectingState(false)
+    setTurnOrderState(null)
+    simulatingRef.current = false
+    simSeatRef.current = null
+    setSimulating(false)
+    setSimSeat(null)
   }, [])
 
   useEffect(() => cleanup, [cleanup])
@@ -170,10 +186,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const makeClient = useCallback((clientName: string, roomCode: string) => {
     return new ClientPeer(clientName, roomCode, {
       onOpen: (id) => setPeerId(id),
-      onRoomInfo: (room, mySeat, names, connected) => {
+      onRoomInfo: (room, mySeat, names, connected, order) => {
         setRoomCode(room)
         setSeat(mySeat)
         setSeats(names.map((playerName, i) => ({ seat: i, name: playerName, connected: connected[i] ?? false })))
+        setTurnOrderState(order)
         saveClientSession({ roomCode: room, name: clientName })
         if (phaseRef.current === 'connecting') setPhaseState('lobby')
         if (reconnectingRef.current && retryModeRef.current === 'lobby') setReconnectingState(false)
@@ -238,6 +255,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setView(viewForPlayer(saved.game, 0))
       }
       const host = makeHost(saved.name, { roomCode: saved.roomCode, seats: saved.seats })
+      host.setTurnOrder(saved.game?.turnOrder ?? null)
+      setTurnOrderState(saved.game?.turnOrder ?? null)
       hostRef.current = host
       setSeats(host.seats)
     },
@@ -274,13 +293,82 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [cleanup, makeClient],
   )
 
+  const simulateRoom = useCallback(
+    (count: number) => {
+      if (!import.meta.env.DEV) return
+      if (count < 2 || count > 5) return
+      cleanup()
+      clearHostSession()
+      clearClientSession()
+      const names = ['You', ...Array.from({ length: count - 1 }, (_, i) => `Player ${i + 2}`)]
+      const state = createGame(names)
+      const seat = state.turnOrder[0]
+      gameRef.current = state
+      setIsHost(true)
+      setName('You')
+      setSeat(0)
+      setRoomCode('SIM')
+      setSeats(names.map((n, i) => ({ seat: i, name: n, connected: true })))
+      setTurnOrderState(state.turnOrder)
+      setView(viewForPlayer(state, seat))
+      setPhaseState(state.over ? 'over' : 'playing')
+      setError(null)
+      simulatingRef.current = true
+      simSeatRef.current = seat
+      setSimulating(true)
+      setSimSeat(seat)
+    },
+    [cleanup],
+  )
+
+  const switchSimSeat = useCallback(() => {
+    const state = gameRef.current
+    if (!state || !simulatingRef.current) return
+    const next = ((simSeatRef.current ?? 0) + 1) % state.players.length
+    simSeatRef.current = next
+    setSimSeat(next)
+    setView(viewForPlayer(state, next))
+  }, [])
+
+  const exitSimulate = useCallback(() => {
+    if (!import.meta.env.DEV) return
+    cleanup()
+    clearHostSession()
+    clearClientSession()
+    setIsHost(false)
+    setName(null)
+    setSeat(null)
+    setRoomCode(null)
+    setSeats(null)
+    setTurnOrderState(null)
+    setView(null)
+    setError(null)
+    setPhaseState('idle')
+  }, [cleanup])
+
   const startGame = useCallback(() => {
+    if (simulatingRef.current) {
+      const current = gameRef.current
+      if (!current) return
+      const state = createGame(current.players.map((p) => p.name))
+      const seat = state.turnOrder[0]
+      gameRef.current = state
+      simSeatRef.current = seat
+      setSimSeat(seat)
+      setTurnOrderState(state.turnOrder)
+      setView(viewForPlayer(state, seat))
+      setPhaseState(state.over ? 'over' : 'playing')
+      return
+    }
     const host = hostRef.current
     if (!host) return
     const names = host.seats.flatMap((s) => (s.name ? [s.name] : []))
     const state = createGame(names)
     gameRef.current = state
     host.lockJoins()
+    host.setTurnOrder(state.turnOrder)
+    host.broadcastRoomInfo()
+    setTurnOrderState(state.turnOrder)
     broadcast(state)
     setPhaseState(state.over ? 'over' : 'playing')
     persistHost()
@@ -288,6 +376,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const sendAction = useCallback(
     (action: Action) => {
+      if (simulatingRef.current) {
+        const state = gameRef.current
+        if (!state) return
+        try {
+          const next = applyAction(state, action)
+          gameRef.current = next
+          const seat = next.turnOf
+          simSeatRef.current = seat
+          setSimSeat(seat)
+          setView(viewForPlayer(next, seat))
+          if (next.over) setPhaseState('over')
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        }
+        return
+      }
       if (isHost) {
         applyAndBroadcast(action, 0)
       } else {
@@ -356,15 +460,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
         seat,
         roomCode,
         seats,
+        turnOrder,
         view,
         error,
         reconnecting,
+        simulating,
+        simSeat,
         createRoom,
         joinRoom,
         startGame,
         sendAction,
         reconnectNow,
         clearError,
+        simulateRoom,
+        switchSimSeat,
+        exitSimulate,
       }}
     >
       {children}

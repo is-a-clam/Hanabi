@@ -10,15 +10,16 @@ import type { HandCard } from './Hand'
 import { Log } from './Log'
 import { COLOR_HEX } from './cardTheme'
 import { COLORS } from '../lib/cards'
-import { MAX_CLUE_TOKENS, playerName } from '../lib/game'
-import type { Action, CardId } from '../lib/types'
+import { MAX_CLUE_TOKENS, playerName, turnNumberFor } from '../lib/game'
+import type { Action, CardId, OtherPlayerView } from '../lib/types'
 import { useGame } from '../store/GameContext'
 
 export function GameTable() {
-  const { view, roomCode, name, seats, error, reconnecting, clearError, sendAction, reconnectNow, isHost, startGame } =
+  const { view, roomCode, name, seats, turnOrder, error, reconnecting, clearError, sendAction, reconnectNow, isHost, startGame, simulating, simSeat, switchSimSeat, exitSimulate } =
     useGame()
   const [selectedId, setSelectedId] = useState<CardId | null>(null)
   const [clueOpen, setClueOpen] = useState(false)
+  const [clueTarget, setClueTarget] = useState<OtherPlayerView | null>(null)
 
   useEffect(() => {
     setSelectedId(null)
@@ -69,11 +70,28 @@ export function GameTable() {
   function handleClue(action: Extract<Action, { type: 'clue' }>): void {
     sendAction(action)
     setClueOpen(false)
+    setClueTarget(null)
+  }
+
+  function openClue(player: OtherPlayerView): void {
+    setClueTarget(player)
+    setClueOpen(true)
   }
 
   function handlePlayAgain(): void {
     clearError()
     startGame()
+  }
+
+  const twoPlayer = view.players.length === 1
+  const showPerPlayerClue = !twoPlayer && myTurn && !view.over && !reconnecting
+  const threePlayers = view.players.length === 2
+  const orderedPlayers = turnOrder
+    ? [...view.players].sort((a, b) => turnOrder.indexOf(a.id) - turnOrder.indexOf(b.id))
+    : view.players
+  const numberedTitle = (id: number, base: string): string => {
+    const n = turnNumberFor(turnOrder, id)
+    return n === null ? base : `${n}. ${base}`
   }
 
   return (
@@ -83,6 +101,31 @@ export function GameTable() {
           <span className='text-xs font-semibold uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
             Room {roomCode}
           </span>
+          {import.meta.env.DEV && simulating && (
+            <span className='flex items-center gap-1.5'>
+              <span className='text-xs font-semibold text-purple-500 dark:text-purple-400'>
+                Sim · {seats?.[simSeat ?? -1]?.name ?? '?'}
+              </span>
+              <button
+                type='button'
+                onClick={switchSimSeat}
+                title='Switch seat'
+                aria-label='Switch simulated seat'
+                className='rounded border border-neutral-300 px-1.5 py-0.5 text-xs font-semibold text-gray-500 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-700'
+              >
+                Switch
+              </button>
+              <button
+                type='button'
+                onClick={exitSimulate}
+                title='Exit simulation'
+                aria-label='Exit simulation'
+                className='rounded border border-neutral-300 px-1.5 py-0.5 text-xs font-semibold text-gray-500 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-gray-300 dark:hover:bg-neutral-700'
+              >
+                Exit
+              </button>
+            </span>
+          )}
           {!isHost && (
             <button
               type='button'
@@ -195,11 +238,12 @@ export function GameTable() {
           </section>
 
           <section className='space-y-4'>
-            {view.players.map((player) => (
+            {orderedPlayers.map((player) => (
               <Hand
                 key={player.id}
-                title={player.name}
+                title={numberedTitle(player.id, player.name)}
                 active={view.turnOf === player.id}
+                compact={threePlayers}
                 offline={seats?.[player.id]?.connected === false}
                 cards={player.hand.map((card, i) => ({
                   id: card.id,
@@ -208,23 +252,36 @@ export function GameTable() {
                   number: card.number,
                   known: player.marks[i],
                 }))}
+                actionButton={
+                  showPerPlayerClue ? (
+                    <button
+                      type='button'
+                      onClick={() => openClue(player)}
+                      disabled={view.clueTokens === 0}
+                      className='rounded bg-teal-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-teal-500 dark:text-neutral-950 dark:hover:bg-teal-400'
+                    >
+                      Clue
+                    </button>
+                  ) : undefined
+                }
               />
             ))}
           </section>
 
           {myTurn && !view.over && !reconnecting && (
             <ActionBar
+              showClue={twoPlayer}
               canClue={view.clueTokens > 0}
               canDiscard={view.clueTokens < MAX_CLUE_TOKENS}
               hasSelection={selectedId !== null}
               onPlay={handlePlay}
               onDiscard={handleDiscard}
-              onClue={() => setClueOpen(true)}
+              onClue={() => orderedPlayers[0] && openClue(orderedPlayers[0])}
             />
           )}
 
           <Hand
-            title={name ? `${name} (you)` : 'You'}
+            title={numberedTitle(view.me, name ? `${name} (you)` : 'You')}
             active={myTurn}
             own
             offline={seats?.[view.me]?.connected === false}
@@ -239,7 +296,7 @@ export function GameTable() {
 
       <div className='h-10 shrink-0' />
 
-      {clueOpen && <ClueModal players={view.players} onClose={() => setClueOpen(false)} onSubmit={handleClue} />}
+      {clueOpen && clueTarget && <ClueModal target={clueTarget} onClose={() => setClueOpen(false)} onSubmit={handleClue} />}
       {view.over && <GameOverModal view={view} isHost={isHost} onPlayAgain={handlePlayAgain} />}
     </main>
   )

@@ -3,7 +3,8 @@ import { requestNotifyPermission } from '../lib/notify'
 import { useGame } from '../store/GameContext'
 
 function Lobby() {
-  const { phase, isHost, roomCode, seat, seats, error, createRoom, joinRoom, startGame, clearError } = useGame()
+  const { phase, isHost, roomCode, seat, seats, error, createRoom, joinRoom, startGame, clearError, simulateRoom } =
+    useGame()
   const [playerName, setPlayerName] = useState('')
   const [joinCode, setJoinCode] = useState('')
 
@@ -171,6 +172,26 @@ function Lobby() {
                 Join room
               </button>
             </div>
+
+            {import.meta.env.DEV && (
+              <div className='border-t border-neutral-200 pt-3 dark:border-neutral-700'>
+                <p className='mb-1.5 text-xs uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>
+                  Dev — simulate room
+                </p>
+                <div className='flex flex-wrap gap-2'>
+                  {[2, 3, 4, 5].map((count) => (
+                    <button
+                      key={count}
+                      type='button'
+                      onClick={() => simulateRoom(count)}
+                      className='rounded border border-neutral-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-900 dark:text-gray-200 dark:hover:bg-neutral-700'
+                    >
+                      {count} players
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </form>
         )}
       </div>

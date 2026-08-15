@@ -7,15 +7,14 @@ import { COLOR_HEX } from './cardTheme'
 type ClueSelection = { kind: 'color'; value: Color } | { kind: 'number'; value: number }
 
 export interface ClueModalProps {
-  players: OtherPlayerView[]
+  target: OtherPlayerView
   onClose: () => void
   onSubmit: (action: Extract<Action, { type: 'clue' }>) => void
 }
 
 const chipBase = 'rounded border px-2.5 py-1 text-sm font-medium transition'
 
-export function ClueModal({ players, onClose, onSubmit }: ClueModalProps) {
-  const [targetId, setTargetId] = useState<number>(players[0]?.id ?? -1)
+export function ClueModal({ target, onClose, onSubmit }: ClueModalProps) {
   const [kind, setKind] = useState<'color' | 'number'>('color')
   const [selection, setSelection] = useState<ClueSelection | null>(null)
 
@@ -27,16 +26,8 @@ export function ClueModal({ players, onClose, onSubmit }: ClueModalProps) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  if (players.length === 0) return null
-
-  const target = players.find((p) => p.id === targetId)
-  const matchingColors = new Set(target ? target.hand.map((card) => card.color) : [])
-  const matchingNumbers = new Set(target ? target.hand.map((card) => card.number) : [])
-
-  function chooseTarget(id: number): void {
-    setTargetId(id)
-    setSelection(null)
-  }
+  const matchingColors = new Set(target.hand.map((card) => card.color))
+  const matchingNumbers = new Set(target.hand.map((card) => card.number))
 
   function chooseKind(next: 'color' | 'number'): void {
     setKind(next)
@@ -44,11 +35,11 @@ export function ClueModal({ players, onClose, onSubmit }: ClueModalProps) {
   }
 
   function handleSubmit(): void {
-    if (targetId === -1 || !selection) return
+    if (!selection) return
     if (selection.kind === 'color') {
-      onSubmit({ type: 'clue', target: targetId, kind: 'color', value: selection.value })
+      onSubmit({ type: 'clue', target: target.id, kind: 'color', value: selection.value })
     } else {
-      onSubmit({ type: 'clue', target: targetId, kind: 'number', value: selection.value })
+      onSubmit({ type: 'clue', target: target.id, kind: 'number', value: selection.value })
     }
   }
 
@@ -62,7 +53,9 @@ export function ClueModal({ players, onClose, onSubmit }: ClueModalProps) {
         aria-label="Give a clue"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Give a clue</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Give a clue to <span className="text-purple-600 dark:text-purple-400">{target.name}</span>
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -71,26 +64,6 @@ export function ClueModal({ players, onClose, onSubmit }: ClueModalProps) {
           >
             ×
           </button>
-        </div>
-
-        <div>
-          <p className="mb-1.5 text-xs uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70">Target</p>
-          <div className="flex flex-wrap gap-1.5">
-            {players.map((player) => (
-              <button
-                key={player.id}
-                type="button"
-                onClick={() => chooseTarget(player.id)}
-                className={`${chipBase} ${
-                  player.id === targetId
-                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:border-purple-400/40 dark:bg-purple-400/10 dark:text-purple-300'
-                    : 'border-neutral-200 bg-white text-gray-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-gray-200 dark:hover:bg-neutral-700'
-                }`}
-              >
-                {player.name}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div>

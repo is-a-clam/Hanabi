@@ -9,6 +9,7 @@ import {
   getScore,
   handSizeFor,
   playerName,
+  turnNumberFor,
   viewForPlayer,
 } from './game'
 import type { Card, Color, Fireworks, GameState } from './types'
@@ -26,6 +27,7 @@ function makeGame(
     clueTokens?: number
     fuseTokens?: number
     turnOf?: number
+    turnOrder?: number[]
   } = {},
 ): GameState {
   const allCards = [...hands.flat(), ...(opts.deck ?? [])]
@@ -48,6 +50,7 @@ function makeGame(
     clueTokens: opts.clueTokens ?? MAX_CLUE_TOKENS,
     fuseTokens: opts.fuseTokens ?? MAX_FUSE_TOKENS,
     turnOf: opts.turnOf ?? 0,
+    turnOrder: opts.turnOrder ?? Array.from({ length: hands.length }, (_, i) => i),
     finalRound: false,
     finalTurnsRemaining: 0,
     over: null,
@@ -110,13 +113,28 @@ describe('createGame', () => {
     expect(a).toEqual(b)
   })
 
-  it('starts with full clue tokens, fuse tokens and turn on seat 0', () => {
+  it('starts with full clue tokens, fuse tokens and a valid random turn order', () => {
     const state = createGame(['a', 'b'])
     expect(state.clueTokens).toBe(MAX_CLUE_TOKENS)
     expect(state.fuseTokens).toBe(MAX_FUSE_TOKENS)
-    expect(state.turnOf).toBe(0)
+    expect([...state.turnOrder].sort()).toEqual([0, 1])
+    expect(state.turnOf).toBe(state.turnOrder[0])
     expect(state.over).toBeNull()
     expect(handSizeFor(2)).toBe(5)
+  })
+
+  it('honours an explicit turn order', () => {
+    const state = createGame(['a', 'b', 'c'], { turnOrder: [2, 0, 1] })
+    expect(state.turnOrder).toEqual([2, 0, 1])
+    expect(state.turnOf).toBe(2)
+  })
+
+  it('randomises a permutation of all seat ids', () => {
+    for (const n of [2, 3, 4, 5]) {
+      const state = createGame(Array.from({ length: n }, (_, i) => `p${i}`), { rng: () => 0.7 })
+      expect(state.turnOrder).toHaveLength(n)
+      expect([...state.turnOrder].sort()).toEqual(Array.from({ length: n }, (_, i) => i))
+    }
   })
 })
 
@@ -280,6 +298,17 @@ describe('turn rotation and endgame', () => {
     expect(next.turnOf).toBe(1)
   })
 
+  it('rotates turns following the turn order', () => {
+    const r1 = c('red', 1)
+    const state = makeGame([[c('blue', 1)], [r1], [c('green', 1)]], { turnOrder: [1, 0, 2], turnOf: 1 })
+    const first = applyAction(state, { type: 'play', cardId: r1.id })
+    expect(first.turnOf).toBe(0)
+    const second = applyAction(first, { type: 'clue', target: 2, kind: 'number', value: 1 })
+    expect(second.turnOf).toBe(2)
+    const third = applyAction(second, { type: 'clue', target: 0, kind: 'number', value: 1 })
+    expect(third.turnOf).toBe(1)
+  })
+
   it('plays a final round after the deck runs out', () => {
     const r1 = c('red', 1)
     const r2 = c('red', 2)
@@ -403,5 +432,18 @@ describe('playerName', () => {
 describe('describeCard', () => {
   it('formats a card as color and number', () => {
     expect(describeCard({ id: 1, color: 'white', number: 5 })).toBe('white 5')
+  })
+})
+
+describe('turnNumberFor', () => {
+  it('returns the 1-based position in the turn order', () => {
+    expect(turnNumberFor([2, 0, 1, 3], 2)).toBe(1)
+    expect(turnNumberFor([2, 0, 1, 3], 0)).toBe(2)
+    expect(turnNumberFor([2, 0, 1, 3], 3)).toBe(4)
+  })
+
+  it('returns null without a turn order or for unknown ids', () => {
+    expect(turnNumberFor(null, 0)).toBeNull()
+    expect(turnNumberFor([0, 1], 99)).toBeNull()
   })
 })

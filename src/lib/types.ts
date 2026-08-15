@@ -52,6 +52,7 @@ export interface GameState {
   clueTokens: number
   fuseTokens: number
   turnOf: PlayerId
+  turnOrder: PlayerId[]
   finalRound: boolean
   finalTurnsRemaining: number
   over: GameOver | null

@@ -60,7 +60,19 @@ describe('isHostMessage', () => {
   }
 
   it('accepts room-info, snapshot, error and pong messages', () => {
-    expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice', null], connected: [true, false] })).toBe(true)
+    expect(
+      isHostMessage({
+        type: 'room-info',
+        room: 'ABC12',
+        seat: 1,
+        names: ['alice', null],
+        connected: [true, false],
+        turnOrder: [1, 0],
+      }),
+    ).toBe(true)
+    expect(
+      isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice', null], connected: [true, false], turnOrder: null }),
+    ).toBe(true)
     expect(isHostMessage({ type: 'snapshot', view })).toBe(true)
     expect(isHostMessage({ type: 'error', message: 'nope' })).toBe(true)
     expect(isHostMessage({ type: 'pong' })).toBe(true)
@@ -68,8 +80,25 @@ describe('isHostMessage', () => {
 
   it('rejects room-info with missing or mismatched connected', () => {
     expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice', null] })).toBe(false)
-    expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: [true, false] })).toBe(false)
-    expect(isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: ['yes'] })).toBe(false)
+    expect(
+      isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: [true, false], turnOrder: null }),
+    ).toBe(false)
+    expect(
+      isHostMessage({ type: 'room-info', room: 'ABC12', seat: 1, names: ['alice'], connected: ['yes'], turnOrder: null }),
+    ).toBe(false)
+  })
+
+  it('rejects room-info with a malformed turn order', () => {
+    expect(
+      isHostMessage({
+        type: 'room-info',
+        room: 'ABC12',
+        seat: 1,
+        names: ['alice', null],
+        connected: [true, false],
+        turnOrder: ['x', 'y'],
+      }),
+    ).toBe(false)
   })
 
   it('rejects a snapshot whose players lack marks', () => {

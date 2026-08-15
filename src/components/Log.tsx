@@ -22,11 +22,14 @@ function describeEvent(event: GameEvent, getName: (id: PlayerId) => string): str
 }
 
 export function Log({ view, myName, className }: LogProps) {
-  const endRef = useRef<HTMLDivElement | null>(null)
+  const listRef = useRef<HTMLOListElement | null>(null)
   const getName = (id: PlayerId) => playerName(view, myName, id)
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    const list = listRef.current
+    if (!list) return
+    const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24
+    if (nearBottom) list.scrollTop = list.scrollHeight
   }, [view.log.length])
 
   return (
@@ -37,13 +40,12 @@ export function Log({ view, myName, className }: LogProps) {
         <p className="text-xs uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70">Log</p>
         <span className="text-xs text-gray-500/60 dark:text-gray-400/60">{view.log.length}</span>
       </div>
-      <ol className="max-h-40 space-y-1 overflow-y-auto px-3 pb-2 text-sm">
+      <ol ref={listRef} className="max-h-40 space-y-1 overflow-y-auto px-3 pb-2 text-sm">
         {view.log.map((event, i) => (
           <li key={i} className="text-gray-700 dark:text-gray-300">
             {describeEvent(event, getName)}
           </li>
         ))}
-        <div ref={endRef} />
       </ol>
     </div>
   )
