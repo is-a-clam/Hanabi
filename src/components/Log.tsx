@@ -28,21 +28,20 @@ export function Log({ view, myName, className }: LogProps) {
   useEffect(() => {
     const list = listRef.current
     if (!list) return
-    const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24
-    if (nearBottom) list.scrollTop = list.scrollHeight
+    list.scrollTop = list.scrollHeight
   }, [view.log.length])
 
   return (
     <div
       className={`rounded-xl border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800/50 ${className ?? ''}`}
     >
-      <div className="flex items-center justify-between px-3 py-2">
-        <p className="text-xs uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70">Log</p>
-        <span className="text-xs text-gray-500/60 dark:text-gray-400/60">{view.log.length}</span>
+      <div className='flex items-center justify-between px-3 py-2'>
+        <p className='text-xs uppercase tracking-wide text-gray-500/70 dark:text-gray-400/70'>Log</p>
+        <span className='text-xs text-gray-500/60 dark:text-gray-400/60'>{view.log.length}</span>
       </div>
-      <ol ref={listRef} className="max-h-40 space-y-1 overflow-y-auto px-3 pb-2 text-sm">
+      <ol ref={listRef} className='max-h-40 space-y-1 overflow-y-auto px-3 pb-2 text-sm'>
         {view.log.map((event, i) => (
-          <li key={i} className="text-gray-700 dark:text-gray-300">
+          <li key={i} className='text-gray-700 dark:text-gray-300'>
             {describeEvent(event, getName)}
           </li>
         ))}
